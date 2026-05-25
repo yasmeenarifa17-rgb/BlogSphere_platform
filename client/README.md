@@ -2,6 +2,9 @@
 
 BlogSphere is a modern full-stack blogging platform built using React and modern web technologies.
 
+# Live website 
+https://blog-sphere-platform.vercel.app/
+
 It allows users to:
 - Create and publish blogs
 - Upload blog images
@@ -127,11 +130,7 @@ Frontend deployed using Vercel.
 
 Developed by Arifa Yasmeen
 
-LinkedIn:
-(Add your LinkedIn link)
 
-GitHub:
-(Add your GitHub profile)
 
 ---
 
