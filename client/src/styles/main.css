@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/* =========================
+   BASE RESET (FIXED)
+========================= */
+
+body {
+  margin: 0;
+  background: #f7f7fb;
+  font-family: Inter, system-ui, sans-serif;
+  color: #111827;
+}
+
+/* =========================
+   CARD SYSTEM
+========================= */
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  transition: 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: #ec4899;
+}
+
+/* =========================
+   BUTTON SYSTEM
+========================= */
+
+.btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #ec4899, #7c3aed);
+  color: white;
+}
+
+.btn.secondary {
+  background: #1f2937;
+  color: white;
+}
+
+/* =========================
+   BADGES
+========================= */
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.badge.pending {
+  background: #fef3c7;
+  color: #f59e0b;
+}
+
+.badge.approved {
+  background: #dcfce7;
+  color: #22c55e;
+}
+
+.badge.rejected {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* =========================
+   TEXT FIX (SAFE)
+========================= */
+
+h1, h2, h3, h4 {
+  color: #111827;
+}
+
+p {
+  color: #374151;
+  line-height: 1.6;
+}
