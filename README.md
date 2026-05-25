@@ -54,16 +54,6 @@ It allows users to:
 
 ---
 
-# 📸 Screenshots
-
-## Home Page
-(Add screenshot here later)
-
-## Admin Dashboard
-(Add screenshot here later)
-
-## Blog Details Page
-(Add screenshot here later)
 
 ---
 
