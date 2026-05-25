@@ -1,16 +1,140 @@
-# React + Vite
+# BlogSphere 🚀
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+BlogSphere is a modern full-stack blogging platform built using React and modern web technologies.
 
-Currently, two official plugins are available:
+It allows users to:
+- Create and publish blogs
+- Upload blog images
+- Comment on blogs
+- Receive notifications
+- Explore trending articles
+- Submit blogs for admin approval
+- Manage blogs through an admin dashboard
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+# ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 👤 User Features
+- User Authentication
+- Create Blog Posts
+- Upload Blog Images
+- Comment System
+- Notifications Page
+- Category Filtering
+- Trending Blogs Section
+- Responsive Design
 
-## Expanding the ESLint configuration
+## 🛡️ Admin Features
+- Admin Dashboard
+- Approve / Reject Blogs
+- Public Publishing System
+- Blog Moderation
+- Notification Management
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+# 🛠️ Tech Stack
+
+## Frontend
+- React.js
+- React Router
+- Tailwind CSS
+- Context API
+
+## Backend
+- Node.js
+- Express.js
+
+## Deployment
+- Vercel
+
+---
+
+# 📸 Screenshots
+
+## Home Page
+(Add screenshot here later)
+
+## Admin Dashboard
+(Add screenshot here later)
+
+## Blog Details Page
+(Add screenshot here later)
+
+---
+
+# 📂 Project Structure
+
+```bash
+BlogSphere/
+│
+├── client/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+├── server/
+│
+└── README.md
+```
+
+---
+
+# ⚙️ Installation
+
+## Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/blogsphere.git
+```
+
+## Install Frontend Dependencies
+
+```bash
+cd client
+npm install
+```
+
+## Run Frontend
+
+```bash
+npm run dev
+```
+
+---
+
+# 🚀 Deployment
+
+Frontend deployed using Vercel.
+
+---
+
+# 📌 Future Improvements (Version 2)
+
+- Firebase Integration
+- Real-Time Database
+- Like System
+- Blog Views Analytics
+- User Profiles
+- Real-Time Notifications
+- Search Functionality
+- Dark Mode
+
+---
+
+# 👩‍💻 Author
+
+Developed by Arifa Yasmeen
+
+LinkedIn:
+(Add your LinkedIn link)
+
+GitHub:
+(Add your GitHub profile)
+
+---
+
+# ⭐ Support
+
+If you like this project, give it a ⭐ on GitHub.
