@@ -4,6 +4,21 @@ import {
   useState,
 } from "react";
 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
+
+import {
+  doc,
+  setDoc,
+  getDoc,
+} from "firebase/firestore";
+
+import { auth, db } from "../firebase";
+
 export const AuthContext =
   createContext();
 
@@ -12,109 +27,173 @@ function AuthProvider({ children }) {
   const [user, setUser] =
     useState(null);
 
+  const [loading, setLoading] =
+    useState(true);
+
+  // =========================
+  // ADMIN EMAIL
+  // =========================
+
+  const ADMIN_EMAIL =
+    "yasmeenarifa17@gmail.com";
+
+  // =========================
+  // AUTH LISTENER
+  // =========================
+
   useEffect(() => {
 
-    const savedUser =
-      JSON.parse(
-        localStorage.getItem("user")
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        async (currentUser) => {
+
+          if (currentUser) {
+
+            const userRef =
+              doc(
+                db,
+                "users",
+                currentUser.uid
+              );
+
+            const userSnap =
+              await getDoc(userRef);
+
+            if (userSnap.exists()) {
+
+              setUser(userSnap.data());
+
+            } else {
+
+              const role =
+                currentUser.email ===
+                ADMIN_EMAIL
+                  ? "admin"
+                  : "user";
+
+              const newUser = {
+                uid: currentUser.uid,
+                email: currentUser.email,
+                role,
+                bio: "",
+                image: "",
+                createdAt:
+                  new Date().toISOString(),
+              };
+
+              await setDoc(
+                userRef,
+                newUser
+              );
+
+              setUser(newUser);
+            }
+
+          } else {
+
+            setUser(null);
+          }
+
+          setLoading(false);
+        }
       );
 
-    if (savedUser) {
-      setUser(savedUser);
-    }
+    return () => unsubscribe();
 
   }, []);
 
-  const login = (email, password) => {
+  // =========================
+  // REGISTER
+  // =========================
 
-    if (!email || !password) {
+  const register = async (
+    email,
+    password
+  ) => {
 
-      alert("Please fill all fields");
-
-      return false;
-    }
-
-    const cleanEmail =
-      email.trim().toLowerCase();
-
-    // ADMIN LOGIN
-
-    if (
-      cleanEmail ===
-        "yasmeenarifa17@gmail.com" &&
-      password === "123456"
-    ) {
-
-      const adminUser = {
-        email: cleanEmail,
-        role: "admin",
-      };
-
-      setUser(adminUser);
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify(adminUser)
+    const result =
+      await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
       );
 
-      return true;
-    }
+    const firebaseUser =
+      result.user;
 
-    // NORMAL USER LOGIN
+    const role =
+      email === ADMIN_EMAIL
+        ? "admin"
+        : "user";
 
-    const normalUser = {
-      email: cleanEmail,
-      role: "user",
+    const userData = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      role,
+      bio: "",
+      image: "",
+      createdAt:
+        new Date().toISOString(),
     };
 
-    setUser(normalUser);
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify(normalUser)
+    await setDoc(
+      doc(
+        db,
+        "users",
+        firebaseUser.uid
+      ),
+      userData
     );
 
-    return true;
+    setUser(userData);
+
+    return firebaseUser;
   };
 
-  const register = (email, password) => {
+  // =========================
+  // LOGIN
+  // =========================
 
-    if (!email || !password) {
+  const login = async (
+    email,
+    password
+  ) => {
 
-      alert("Please fill all fields");
+    const result =
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
-      return false;
+    const firebaseUser =
+      result.user;
+
+    const userDoc =
+      await getDoc(
+        doc(
+          db,
+          "users",
+          firebaseUser.uid
+        )
+      );
+
+    if (userDoc.exists()) {
+
+      setUser(userDoc.data());
     }
 
-    const cleanEmail =
-      email.trim().toLowerCase();
-
-    const newUser = {
-
-      email: cleanEmail,
-
-      role:
-        cleanEmail ===
-        "yasmeenarifa17@gmail.com"
-          ? "admin"
-          : "user",
-    };
-
-    setUser(newUser);
-
-    localStorage.setItem(
-      "user",
-      JSON.stringify(newUser)
-    );
-
-    return true;
+    return firebaseUser;
   };
 
-  const logout = () => {
+  // =========================
+  // LOGOUT
+  // =========================
 
-    setUser(null);
+  const logout = async () => {
 
-    localStorage.removeItem("user");
+    await signOut(auth);
   };
 
   return (
@@ -122,13 +201,13 @@ function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
-        login,
         register,
+        login,
         logout,
       }}
     >
 
-      {children}
+      {!loading && children}
 
     </AuthContext.Provider>
   );

@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../context/AuthContext";
 
@@ -11,164 +11,159 @@ function Register() {
   const { register } =
     useContext(AuthContext);
 
-  const [formData, setFormData] =
-    useState({
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
+  const [email, setEmail] =
+    useState("");
 
-  const handleChange = (e) => {
+  const [password, setPassword] =
+    useState("");
 
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const [error, setError] =
+    useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
 
     e.preventDefault();
 
-    if (
-      formData.password !==
-      formData.confirmPassword
-    ) {
+    try {
 
-      alert("Passwords do not match");
-
-      return;
-    }
-
-    const success = register(
-      formData.email,
-      formData.password
-    );
-
-    if (success) {
-
-      alert("Registration Successful");
+      await register(email, password);
 
       navigate("/");
+
+    } catch (err) {
+
+      setError(err.message);
     }
   };
 
   return (
+
     <div className="
       min-h-screen
       flex
       items-center
       justify-center
       bg-[#f7f7fb]
-      px-5
+      px-6
     ">
 
-      <div className="
-        w-full
-        max-w-md
-        bg-white
-        p-10
-        rounded-[35px]
-        border
-        border-cyan-100
-        shadow-[0_0_50px_rgba(6,182,212,0.15)]
-      ">
+      <form
+        onSubmit={handleSubmit}
+        className="
+          bg-white
+          w-full
+          max-w-xl
+          p-12
+          rounded-[40px]
+          border
+          border-pink-100
+          shadow-[0_0_40px_rgba(236,72,153,0.08)]
+        "
+      >
 
         <h1 className="
-          text-5xl
-          font-bold
-          text-gray-800
-          mb-3
+          text-6xl
+          font-black
+          text-gray-900
+          mb-5
         ">
           Create Account
         </h1>
 
         <p className="
-          text-gray-500
+          text-gray-600
+          text-lg
           mb-10
         ">
-          Join BlogSphere and start sharing your ideas.
+          Join BlogSphere and start publishing blogs.
         </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
+        {error && (
+
+          <p className="
+            mb-6
+            text-red-500
+            font-medium
+          ">
+            {error}
+          </p>
+
+        )}
+
+        <input
+          type="email"
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) =>
+            setEmail(e.target.value)
+          }
+          className="
+            w-full
+            p-5
+            rounded-3xl
+            border
+            border-pink-100
+            mb-6
+            outline-none
+          "
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) =>
+            setPassword(e.target.value)
+          }
+          className="
+            w-full
+            p-5
+            rounded-3xl
+            border
+            border-pink-100
+            mb-8
+            outline-none
+          "
+        />
+
+        <button
+          type="submit"
+          className="
+            w-full
+            bg-pink-500
+            hover:bg-pink-600
+            text-white
+            py-5
+            rounded-3xl
+            font-bold
+            text-xl
+            transition
+          "
         >
+          Register
+        </button>
 
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={formData.email}
-            onChange={handleChange}
-            className="
-              w-full
-              p-5
-              rounded-2xl
-              border
-              border-cyan-100
-              outline-none
-              focus:ring-2
-              focus:ring-cyan-300
-            "
-          />
+        <p className="
+          mt-8
+          text-center
+          text-gray-600
+        ">
+          Already have an account?
+          {" "}
 
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
+          <Link
+            to="/login"
             className="
-              w-full
-              p-5
-              rounded-2xl
-              border
-              border-cyan-100
-              outline-none
-              focus:ring-2
-              focus:ring-cyan-300
-            "
-          />
-
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className="
-              w-full
-              p-5
-              rounded-2xl
-              border
-              border-cyan-100
-              outline-none
-              focus:ring-2
-              focus:ring-cyan-300
-            "
-          />
-
-          <button
-            type="submit"
-            className="
-              w-full
-              bg-cyan-500
-              hover:bg-cyan-600
-              transition
-              text-white
-              py-4
-              rounded-2xl
-              font-semibold
-              shadow-[0_0_30px_rgba(6,182,212,0.35)]
+              text-pink-500
+              font-bold
             "
           >
-            Register
-          </button>
+            Login
+          </Link>
 
-        </form>
+        </p>
 
-      </div>
+      </form>
 
     </div>
   );

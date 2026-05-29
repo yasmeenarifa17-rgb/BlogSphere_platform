@@ -4,7 +4,19 @@ import {
   useState,
 } from "react";
 
-import blogsData from "../data/blogs";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+  arrayUnion,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
 
 export const BlogContext =
   createContext();
@@ -17,302 +29,430 @@ function BlogProvider({ children }) {
   const [pendingBlogs, setPendingBlogs] =
     useState([]);
 
-  useEffect(() => {
+  // =========================
+  // FETCH APPROVED BLOGS
+  // =========================
 
-    const savedBlogs =
-      JSON.parse(
-        localStorage.getItem(
-          "approvedBlogs"
-        )
-      );
+  const fetchBlogs = async () => {
 
-    const savedPending =
-      JSON.parse(
-        localStorage.getItem(
-          "pendingBlogs"
-        )
-      );
+    try {
 
-    if (savedBlogs) {
+      const snapshot =
+        await getDocs(
+          collection(db, "blogs")
+        );
 
-      const mergedBlogs = [
+      const blogsData =
+        snapshot.docs.map((doc) => ({
 
-        ...savedBlogs,
+          id: doc.id,
 
-        ...blogsData.filter(
-          (blog) =>
-            !savedBlogs.some(
-              (saved) =>
-                saved.id === blog.id
-            )
-        ),
-      ];
-
-      setBlogs(mergedBlogs);
-
-    } else {
+          ...doc.data(),
+        }));
 
       setBlogs(blogsData);
-    }
 
-    if (savedPending) {
-      setPendingBlogs(savedPending);
+    } catch (error) {
+
+      console.log(error);
     }
+  };
+
+  // =========================
+  // FETCH PENDING BLOGS
+  // =========================
+
+  const fetchPendingBlogs =
+    async () => {
+
+      try {
+
+        const snapshot =
+          await getDocs(
+            collection(
+              db,
+              "pendingBlogs"
+            )
+          );
+
+        const pendingData =
+          snapshot.docs.map((doc) => ({
+
+            id: doc.id,
+
+            ...doc.data(),
+          }));
+
+        setPendingBlogs(
+          pendingData
+        );
+
+      } catch (error) {
+
+        console.log(error);
+      }
+    };
+
+  useEffect(() => {
+
+    fetchBlogs();
+
+    fetchPendingBlogs();
 
   }, []);
 
-  useEffect(() => {
-
-    localStorage.setItem(
-      "approvedBlogs",
-      JSON.stringify(blogs)
-    );
-
-  }, [blogs]);
-
-  useEffect(() => {
-
-    localStorage.setItem(
-      "pendingBlogs",
-      JSON.stringify(pendingBlogs)
-    );
-
-  }, [pendingBlogs]);
-
-  useEffect(() => {
-  localStorage.setItem("approvedBlogs", JSON.stringify(blogs));
-}, [blogs]);
-
+  // =========================
   // SUBMIT BLOG
+  // =========================
 
-  const submitBlog = (blog) => {
+const submitBlog = async (blog) => {
 
-    const newBlog = {
-  ...blog,
-  id: Date.now(),
-  status: blog.status || "Pending",
-  userEmail: blog.userEmail || blog.createdBy || blog.email || null
-};
+  try {
 
-    // ADMIN DIRECT PUBLISH
+    console.log("Submitting Blog:", blog);
 
-    if (blog.role === "Administrator") {
+    // =========================
+    // ADMIN BLOG
+    // =========================
 
-      setBlogs((prev) => [
-        newBlog,
-        ...prev,
-      ]);
+    if (
+      blog.createdBy ===
+      "yasmeenarifa17@gmail.com"
+    ) {
 
-      return;
-    }
-
-    // USER SUBMISSION
-
-    setPendingBlogs((prev) => [
-      ...prev,
-      newBlog,
-    ]);
-  };
-
-  // APPROVE BLOG
-
- const approveBlog = (id) => {
-
-  const blogToApprove =
-    pendingBlogs.find(
-      (blog) => blog.id === id
-    );
-
-  if (!blogToApprove) return;
-
-  const approvedBlog = {
-    ...blogToApprove,
-    status: "Approved",
-  };
-
-  // UPDATE BLOG STATE
-  const updatedApprovedBlogs = [
-    approvedBlog,
-    ...blogs,
-  ];
-
-  setBlogs(updatedApprovedBlogs);
-
-  // FORCE LOCALSTORAGE SYNC (IMPORTANT FIX)
-  localStorage.setItem(
-    "approvedBlogs",
-    JSON.stringify(updatedApprovedBlogs)
-  );
-
-  // UPDATE USER SUBMISSIONS
-  const userBlogs =
-    JSON.parse(
-      localStorage.getItem(
-        `myBlogs_${approvedBlog.createdBy}`
-      )
-    ) || [];
-
-  const updatedUserBlogs =
-    userBlogs.map((blog) => {
-
-      if (
-        blog.date === approvedBlog.date
-      ) {
-
-        return {
+      await addDoc(
+        collection(db, "blogs"),
+        {
           ...blog,
           status: "Approved",
-        };
-      }
+          createdAt:
+            new Date().toISOString(),
+        }
+      );
 
-      return blog;
-    });
+      console.log(
+        "Admin blog published"
+      );
 
-  localStorage.setItem(
-    `myBlogs_${approvedBlog.createdBy}`,
-    JSON.stringify(updatedUserBlogs)
-  );
+    } else {
 
-  // REMOVE FROM PENDING
-  const updatedPending =
-    pendingBlogs.filter(
-      (blog) => blog.id !== id
-    );
+      // =========================
+      // USER BLOG -> PENDING
+      // =========================
 
-  setPendingBlogs(updatedPending);
+      await addDoc(
+        collection(
+          db,
+          "pendingBlogs"
+        ),
+        {
+          ...blog,
+          status: "Pending",
+          createdAt:
+            new Date().toISOString(),
+        }
+      );
 
-  localStorage.setItem(
-    "pendingBlogs",
-    JSON.stringify(updatedPending)
-  );
+      console.log(
+        "Blog added to pendingBlogs"
+      );
+    }
 
-  // NOTIFICATION
-  if (
-    blogToApprove.userEmail ||
-    blogToApprove.createdBy
-  ) {
+    await fetchBlogs();
 
-    addNotification(
-      blogToApprove.userEmail ||
-      blogToApprove.createdBy,
+    await fetchPendingBlogs();
 
-      `Your blog "${blogToApprove.title}" was Approved 🎉`,
+  } catch (error) {
 
-      "approved"
+    console.log(
+      "SUBMIT ERROR:",
+      error
     );
   }
 };
 
-  // REJECT BLOG
 
-  const rejectBlog = (id) => {
+  // =========================
+  // APPROVE BLOG
+  // =========================
 
-    const rejectedBlog =
-      pendingBlogs.find(
-        (blog) => blog.id === id
-      );
+  const approveBlog =
+    async (blogId) => {
 
-    if (!rejectedBlog) return;
+      try {
 
-    // UPDATE USER SUBMISSIONS
+        const pendingRef =
+          doc(
+            db,
+            "pendingBlogs",
+            blogId
+          );
 
-    const userBlogs =
-      JSON.parse(
-        localStorage.getItem(
-          `myBlogs_${rejectedBlog.createdBy}`
-        )
-      ) || [];
-
-    const updatedUserBlogs =
-      userBlogs.map((blog) => {
+        const pendingSnap =
+          await getDoc(
+            pendingRef
+          );
 
         if (
-          blog.date ===
-          rejectedBlog.date
-        ) {
+          !pendingSnap.exists()
+        ) return;
 
-          return {
-            ...blog,
-            status: "Rejected",
-          };
-        }
+        const blogData =
+          pendingSnap.data();
 
-        return blog;
+        // ADD TO APPROVED
+        await addDoc(
+          collection(db, "blogs"),
+          {
+            ...blogData,
+            status:
+              "Approved",
+          }
+        );
+
+        // DELETE FROM PENDING
+        await deleteDoc(
+          pendingRef
+        );
+
+        // NOTIFICATION
+        const notification = {
+
+          email:
+            blogData.createdBy,
+
+          type:
+            "approved",
+
+          message:
+            `Your blog "${blogData.title}" was approved and published.`,
+
+          date:
+            new Date().toLocaleString(),
+        };
+
+        const existingNotifications =
+          JSON.parse(
+            localStorage.getItem(
+              "notifications"
+            )
+          ) || [];
+
+        localStorage.setItem(
+          "notifications",
+          JSON.stringify([
+            notification,
+            ...existingNotifications,
+          ])
+        );
+
+        fetchBlogs();
+
+        fetchPendingBlogs();
+
+      } catch (error) {
+
+        console.log(error);
+      }
+    };
+
+  // =========================
+  // REJECT BLOG
+  // =========================
+
+  const rejectBlog =
+    async (blogId) => {
+
+      try {
+
+        const pendingRef =
+          doc(
+            db,
+            "pendingBlogs",
+            blogId
+          );
+
+        const pendingSnap =
+          await getDoc(
+            pendingRef
+          );
+
+        if (
+          !pendingSnap.exists()
+        ) return;
+
+        const blogData =
+          pendingSnap.data();
+
+        // DELETE BLOG
+        await deleteDoc(
+          pendingRef
+        );
+
+        // NOTIFICATION
+        const notification = {
+
+          email:
+            blogData.createdBy,
+
+          type:
+            "rejected",
+
+          message:
+            `Your blog "${blogData.title}" was rejected by admin.`,
+
+          date:
+            new Date().toLocaleString(),
+        };
+
+        const existingNotifications =
+          JSON.parse(
+            localStorage.getItem(
+              "notifications"
+            )
+          ) || [];
+
+        localStorage.setItem(
+          "notifications",
+          JSON.stringify([
+            notification,
+            ...existingNotifications,
+          ])
+        );
+
+        fetchPendingBlogs();
+
+      } catch (error) {
+
+        console.log(error);
+      }
+    };
+
+  // =========================
+  // GET NOTIFICATIONS
+  // =========================
+
+  const getNotifications =
+    (email) => {
+
+      const notifications =
+        JSON.parse(
+          localStorage.getItem(
+            "notifications"
+          )
+        ) || [];
+
+      return notifications.filter(
+        (item) =>
+          item.email === email
+      );
+    };
+
+  // =========================
+  // COMMENTS
+  // =========================
+
+  const addComment = async (
+    blogId,
+    comment
+  ) => {
+
+    try {
+
+      const blogRef =
+        doc(db, "blogs", blogId);
+
+      await updateDoc(blogRef, {
+
+        comments:
+          arrayUnion(comment),
       });
 
-    localStorage.setItem(
-      `myBlogs_${rejectedBlog.createdBy}`,
-      JSON.stringify(updatedUserBlogs)
-    );
+      fetchBlogs();
 
-    setPendingBlogs((prev) =>
-      prev.filter(
-        (blog) => blog.id !== id
-      )
-    );
-    if (rejectedBlog.userEmail || rejectedBlog.createdBy) {
-  addNotification(
-    rejectedBlog.userEmail || rejectedBlog.createdBy,
-    `Your blog "${rejectedBlog.title}" was Rejected 😔`,
-    "rejected"
-  );
-}
-  };
+    } catch (error) {
 
-  // ===============================
-// NOTIFICATION SYSTEM (NEW)
-// ===============================
-
-const addNotification = (email, message, type) => {
-  const key = `notifications_${email}`;
-
-  const existing = JSON.parse(localStorage.getItem(key)) || [];
-
-  const newNotification = {
-    id: Date.now(),
-    message,
-    type,
-    date: new Date().toLocaleDateString()
-  };
-
-  localStorage.setItem(
-    key,
-    JSON.stringify([newNotification, ...existing])
-  );
-};
-
-const getNotifications = (email) => {
-  const key = `notifications_${email}`;
-  return JSON.parse(localStorage.getItem(key)) || [];
-};
-// COMMENTS
-
-  const addComment = (blogId, comment) => {
-
-  const updatedBlogs = blogs.map((blog) => {
-
-    if (blog.id === blogId) {
-
-      return {
-        ...blog,
-        comments: [
-          ...(blog.comments || []),
-          comment,
-        ],
-      };
+      console.log(error);
     }
+  };
 
-    return blog;
-  });
+  // =========================
+  // LIKES
+  // =========================
 
-  setBlogs(updatedBlogs);
+  const toggleLike = async (
+    blogId,
+    currentLikes = 0
+  ) => {
 
-  // IMPORTANT LOCALSTORAGE SYNC
-  localStorage.setItem(
-    "approvedBlogs",
-    JSON.stringify(updatedBlogs)
-  );
-};
+    try {
+
+      const blogRef =
+        doc(db, "blogs", blogId);
+
+      await updateDoc(blogRef, {
+
+        likes:
+          currentLikes + 1,
+      });
+
+      fetchBlogs();
+
+    } catch (error) {
+
+      console.log(error);
+    }
+  };
+
+  // =========================
+  // BOOKMARKS
+  // =========================
+
+  const toggleBookmark =
+    (blog) => {
+
+      const existingBookmarks =
+
+        JSON.parse(
+          localStorage.getItem(
+            "bookmarks"
+          )
+        ) || [];
+
+      const alreadyBookmarked =
+
+        existingBookmarks.some(
+          (item) =>
+            item.id === blog.id
+        );
+
+      let updatedBookmarks;
+
+      if (
+        alreadyBookmarked
+      ) {
+
+        updatedBookmarks =
+          existingBookmarks.filter(
+            (item) =>
+              item.id !== blog.id
+          );
+
+      } else {
+
+        updatedBookmarks = [
+          blog,
+          ...existingBookmarks,
+        ];
+      }
+
+      localStorage.setItem(
+        "bookmarks",
+        JSON.stringify(
+          updatedBookmarks
+        )
+      );
+    };
 
   return (
 
@@ -320,12 +460,20 @@ const getNotifications = (email) => {
       value={{
         blogs,
         pendingBlogs,
+        fetchPendingBlogs,
+
         submitBlog,
+
         approveBlog,
         rejectBlog,
+
+        getNotifications,
+
         addComment,
-        addNotification,
-getNotifications,
+
+        toggleLike,
+
+        toggleBookmark,
       }}
     >
 

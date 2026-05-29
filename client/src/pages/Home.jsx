@@ -1,31 +1,139 @@
+import {
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+
 import FeaturedBlog from "../components/blog/FeaturedBlog";
 import BlogCard from "../components/blog/BlogCard";
 
-import { useContext, useState } from "react";
+import TrendingSection from "../components/home/TrendingSection";
+import SearchBar from "../components/home/SearchBar";
+import CategoryFilter from "../components/home/CategoryFilter";
+
 import { BlogContext } from "../context/BlogContext";
 import { AuthContext } from "../context/AuthContext";
 
+import uploadStarterBlogs
+from "../utils/uploadStarterBlogs";
+
 function Home() {
 
-  const { user } = useContext(AuthContext);
-  const { blogs } = useContext(BlogContext);
+  const { user } =
+    useContext(AuthContext);
 
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const { blogs } =
+    useContext(BlogContext);
 
-  const categories = ["All", ...new Set(blogs.map(b => b.category))];
+  const [searchQuery, setSearchQuery] =
+    useState("");
 
-  const filteredBlogs =
-    selectedCategory === "All"
-      ? blogs
-      : blogs.filter(b => b.category === selectedCategory);
+  const [activeCategory, setActiveCategory] =
+    useState("All");
+
+  const [uploading, setUploading] =
+    useState(false);
+
+  // FILTER BLOGS
+
+  const filteredBlogs = useMemo(() => {
+
+    return blogs.filter((blog) => {
+
+      const matchesCategory =
+
+        activeCategory === "All"
+
+          ? true
+
+          : blog.category === activeCategory;
+
+      const matchesSearch =
+
+        blog.title
+          ?.toLowerCase()
+          .includes(
+            searchQuery.toLowerCase()
+          )
+
+        ||
+
+        blog.author
+          ?.toLowerCase()
+          .includes(
+            searchQuery.toLowerCase()
+          )
+
+        ||
+
+        blog.category
+          ?.toLowerCase()
+          .includes(
+            searchQuery.toLowerCase()
+          );
+
+      return (
+        matchesCategory &&
+        matchesSearch
+      );
+    });
+
+  }, [
+    blogs,
+    activeCategory,
+    searchQuery,
+  ]);
+
+  // SORT BLOGS
+
+  const latestBlogs =
+    [...filteredBlogs];
+
+  // UPLOAD BLOGS
+
+  const handleUploadBlogs =
+    async () => {
+
+      try {
+
+        setUploading(true);
+
+        await uploadStarterBlogs();
+
+        window.location.reload();
+
+      } catch (error) {
+
+        console.log(error);
+
+        alert(
+          "Failed to upload blogs"
+        );
+
+      } finally {
+
+        setUploading(false);
+      }
+    };
 
   return (
-    <div className="bg-[#f7f7fb] min-h-screen">
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
+    <div className="
+      bg-[#f7f7fb]
+      min-h-screen
+    ">
 
-        {/* Greeting Section (UNCHANGED) */}
+      <div className="
+        max-w-7xl
+        mx-auto
+        px-6
+        py-10
+      ">
+
+        {/* USER GREETING */}
+
         {user && (
+
           <div className="
             mb-10
             bg-white
@@ -35,93 +143,200 @@ function Home() {
             border-pink-100
             shadow-[0_0_40px_rgba(236,72,153,0.10)]
           ">
-            <h1 className="text-4xl font-bold text-gray-800 mb-3">
-              Hi, {user.email.split("@")[0]} 👋
-            </h1>
 
-            <p className="text-gray-600 text-lg leading-8 max-w-3xl">
-              Welcome to BlogSphere — a modern tech blogging platform
-              where developers, engineers and creators share ideas,
-              insights and innovation.
-            </p>
+            <div className="
+              flex
+              flex-col
+              lg:flex-row
+              lg:items-center
+              lg:justify-between
+              gap-6
+            ">
+
+              <div>
+
+                <h1 className="
+                  text-4xl
+                  font-bold
+                  text-gray-800
+                  mb-3
+                ">
+                  Hi,
+                  {" "}
+                  {user.email.split("@")[0]}
+                  👋
+                </h1>
+
+                <p className="
+                  text-gray-600
+                  text-lg
+                  leading-8
+                  max-w-3xl
+                ">
+                  Welcome to BlogSphere —
+                  a modern publishing platform
+                  for developers, creators,
+                  engineers and tech innovators.
+                </p>
+
+              </div>
+
+              {/* ADMIN BUTTON */}
+
+              {user?.role === "admin" && (
+
+                <button
+                  onClick={
+                    handleUploadBlogs
+                  }
+                  disabled={uploading}
+                  className="
+                    bg-pink-500
+                    hover:bg-pink-600
+                    transition
+                    text-white
+                    px-6
+                    py-4
+                    rounded-2xl
+                    font-semibold
+                    shadow-[0_0_30px_rgba(236,72,153,0.25)]
+                  "
+                >
+
+                  {uploading
+                    ? "Uploading..."
+                    : "Upload Starter Blogs"}
+
+                </button>
+
+              )}
+
+            </div>
+
           </div>
+
         )}
 
-        {/* FEATURED HERO (UNCHANGED COMPONENT) */}
+        {/* HERO */}
+
         <FeaturedBlog />
 
-        {/* CATEGORY FILTER (NEW ADDITION) */}
-        <div className="flex gap-3 flex-wrap my-10">
+        {/* SEARCH */}
 
-          {categories.map((cat, index) => (
-            <button
-              key={index}
-              onClick={() => setSelectedCategory(cat)}
-              className={`
-                px-4 py-2 rounded-full text-sm border transition
-                ${selectedCategory === cat
-                  ? "bg-pink-500 text-white border-pink-500"
-                  : "bg-white text-gray-600 border-pink-100 hover:border-pink-300"}
-              `}
-            >
-              {cat}
-            </button>
-          ))}
+        <div className="mt-14">
+
+          <SearchBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
 
         </div>
 
-        {/* TRENDING SECTION (NEW BLOCK) */}
-        <div className="mb-12">
+        {/* CATEGORY */}
 
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            🔥 Trending Blogs
-          </h2>
+        <CategoryFilter
+          activeCategory={activeCategory}
+          setActiveCategory={
+            setActiveCategory
+          }
+        />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* TRENDING */}
 
-            {blogs.slice(0, 3).map(blog => (
-              <div key={blog.id} className="scale-95">
-                <BlogCard blog={blog} />
-              </div>
+        <TrendingSection
+          blogs={blogs}
+        />
+
+        {/* BLOGS */}
+
+        <div className="mt-24">
+
+          <div className="
+            flex
+            items-center
+            justify-between
+            mb-10
+          ">
+
+            <div>
+
+              <p className="
+                text-cyan-500
+                font-semibold
+                mb-2
+              ">
+                LATEST ARTICLES
+              </p>
+
+              <h2 className="
+                text-5xl
+                font-bold
+                text-gray-800
+              ">
+                Explore New Stories
+              </h2>
+
+            </div>
+
+          </div>
+
+          {/* EMPTY */}
+
+          {latestBlogs.length === 0 && (
+
+            <div className="
+              bg-white
+              rounded-[35px]
+              p-16
+              text-center
+              border
+              border-pink-100
+            ">
+
+              <h3 className="
+                text-3xl
+                font-bold
+                text-gray-800
+                mb-4
+              ">
+                No Blogs Found
+              </h3>
+
+              <p className="
+                text-gray-500
+                text-lg
+              ">
+                Upload starter blogs first.
+              </p>
+
+            </div>
+
+          )}
+
+          {/* BLOG GRID */}
+
+          <div className="
+            grid
+            grid-cols-1
+            lg:grid-cols-2
+            gap-10
+          ">
+
+            {latestBlogs.map((blog) => (
+
+              <BlogCard
+                key={blog.id}
+                blog={blog}
+              />
+
             ))}
 
           </div>
 
         </div>
 
-        {/* SEARCH (UNCHANGED) */}
-        <div className="my-12">
-
-          <input
-            type="text"
-            placeholder="Search articles..."
-            className="
-              w-full
-              bg-white
-              p-5
-              rounded-3xl
-              border
-              border-pink-100
-              outline-none
-              shadow-[0_0_35px_rgba(236,72,153,0.10)]
-            "
-          />
-
-        </div>
-
-        {/* BLOG GRID (UPDATED FILTER LOGIC ONLY) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-
-          {filteredBlogs.map((blog) => (
-            <BlogCard
-              key={blog.id}
-              blog={blog}
-            />
-          ))}
-
-        </div>
-
       </div>
+
     </div>
   );
 }

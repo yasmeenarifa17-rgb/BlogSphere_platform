@@ -6,7 +6,10 @@ import { BlogContext } from "../context/BlogContext";
 function CreatePost() {
 
   const { user } = useContext(AuthContext);
-  const { submitBlog } = useContext(BlogContext);
+ const {
+  submitBlog,
+  fetchPendingBlogs
+} = useContext(BlogContext);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -58,30 +61,40 @@ function CreatePost() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
 
     if (!formData.title || !formData.category || !formData.content) {
       alert("Please fill all fields");
       return;
     }
 
-    const newBlog = {
-      ...formData,
-      image:
-        formData.image ||
-        "https://images.unsplash.com/photo-1518770660439-4636190af475",
-      author: user.email.split("@")[0],
-      role: user.role === "admin" ? "Administrator" : "Community Writer",
-      readTime: "5 min read",
-      comments: [],
-      description: formData.content.slice(0, 120) + "...",
-      date: new Date().toLocaleString(),
-      status: user.role === "admin" ? "Approved" : "Pending",
-      createdBy: user.email
-    };
+   const newBlog = {
+  ...formData,
+  image:
+    formData.image ||
+    "https://images.unsplash.com/photo-1518770660439-4636190af475",
+  author: user.email.split("@")[0],
+  role:
+    user.role === "admin"
+      ? "Administrator"
+      : "Community Writer",
+  readTime: "5 min read",
+  comments: [],
+  description:
+    formData.content.slice(0, 120) + "...",
+  date: new Date().toLocaleString(),
+  status:
+    user?.role === "admin"
+      ? "Approved"
+      : "Pending",
 
-    submitBlog(newBlog);
+  email: user.email,
 
+  createdBy: user.email
+};
+
+   await submitBlog(newBlog);
+await fetchPendingBlogs();
     const updatedBlogs = [newBlog, ...submittedBlogs];
 
     setSubmittedBlogs(updatedBlogs);
@@ -143,27 +156,48 @@ function CreatePost() {
             />
 
             <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full p-5 rounded-2xl border"
-            >
-              <option value="">Select Category</option>
-              <option>Artificial Intelligence</option>
-              <option>Programming</option>
-              <option>Web Development</option>
-              <option>Cloud Computing</option>
-              <option>Startups</option>
-            </select>
+  name="category"
+  value={formData.category}
+  onChange={handleChange}
+  className="w-full p-5 rounded-2xl border"
+>
+  <option value="">Select Category</option>
 
-            <textarea
-              rows="12"
-              name="content"
-              value={formData.content}
-              onChange={handleChange}
-              placeholder="Write your story..."
-              className="w-full p-5 rounded-2xl border resize-none"
-            />
+  <option>Artificial Intelligence</option>
+  <option>Machine Learning</option>
+  <option>Web Development</option>
+  <option>Technology</option>
+  <option>Programming</option>
+  <option>Cloud Computing</option>
+  <option>Quantum Computing</option>
+  <option>Cybersecurity</option>
+  <option>Startups</option>
+  <option>UI/UX Design</option>
+</select>
+           <textarea
+  rows="16"
+  name="content"
+  value={formData.content}
+  onChange={handleChange}
+  placeholder={`Example:
+
+# Main Heading
+
+## Sub Heading
+
+Write normal paragraph text here...
+
+`}
+  className="
+    w-full
+    p-5
+    rounded-2xl
+    border
+    resize-none
+    text-lg
+    leading-9
+  "
+/>
           </div>
 
           <div className="mt-8" onClick={handleSubmit}>

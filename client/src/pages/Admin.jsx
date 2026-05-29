@@ -166,6 +166,12 @@ function Admin() {
                       {blog.description}
                     </p>
 
+                    <p className="text-sm text-gray-400 mt-2">
+  Submitted By:
+  {" "}
+  {blog.email}
+</p>
+
                     {/* ACTIONS ONLY FOR PENDING */}
                     {tab === "pending" && (
                       <div className="flex gap-4 mt-8">
